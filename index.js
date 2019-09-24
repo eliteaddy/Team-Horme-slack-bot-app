@@ -1,16 +1,19 @@
 const Slackbot = require("slackbots");
+const path = require("path");
+const express = require("express");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const app = express();
 const dfs = require("dropbox-fs")({
   apiKey: "x535totmco07kxl"
 });
+const port = 3000;
 
-const token = "xoxb-771591631143-769745293696-yrCXoncLqPl0cCi3d1m2H8fT";
-
+const token = "xoxb-771591631143-769745293696-xdFsfdeFpfhYCwLtojLJA5Ay";
 const bot = new Slackbot({
   token,
   name: "conversation-saver"
 });
-
+app.use("*", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 // Start Handler
 bot.on("start", () => {
   // bot.postMessageToChannel("general", "Lets help you save your conversation");
@@ -68,7 +71,7 @@ const handleMessage = data => {
 };
 
 const getChannelHistory = channel => {
-  var tokens = `xoxp-771591631143-769737406181-758268424866-fad9f3b5fb5b194e98dd2094b217f2bf`;
+  var tokens = `xoxp-771591631143-769737406181-773055873511-a83f6cc276298f58a5ec33139ba95b4e`;
   var url = `https://slack.com/api/conversations.history?token=${tokens}&channel=${channel}`;
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
@@ -112,4 +115,7 @@ const readFolder = channel => {
   });
 };
 
-bot.login();
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}!`);
+  bot.login();
+});
