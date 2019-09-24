@@ -1,7 +1,10 @@
 const Slackbot = require("slackbots");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const dfs = require("dropbox-fs")({
+  apiKey: "x535totmco07kxl"
+});
 
-const token = "xoxb-771591631143-769745293696-JZv34J29U0Uhp6GaeTWbccUq";
+const token = "xoxb-771591631143-769745293696-yrCXoncLqPl0cCi3d1m2H8fT";
 
 const bot = new Slackbot({
   token,
@@ -10,9 +13,9 @@ const bot = new Slackbot({
 
 // Start Handler
 bot.on("start", () => {
-  bot.postMessageToChannel("general", "Lets help you save your conversation");
-  bot.postMessage("general", "Welcome to Conversation Saver");
-  // console.log(res);
+  // bot.postMessageToChannel("general", "Lets help you save your conversation");
+  // bot.postMessage("general", "Welcome to Conversation Saver");
+  console.log("Bot Started");
 });
 
 // Error Handler
@@ -41,11 +44,11 @@ const handleMessage = data => {
   var channel = data.channel;
   // console.log(channel);
   if (
-    message.includes(" signup") ||
+    message.includes(" check saved") ||
     message.includes(" sign-up") ||
     message.includes(" sign up")
   ) {
-    bot.postMessage(channel, "Enter your username");
+    readFolder(channel);
     // bot.postMessageToChannel("general", "Enter your username");
   }
   if (
@@ -56,7 +59,7 @@ const handleMessage = data => {
     bot.postMessage(channel, "Enter your username");
     // bot.postMessageToChannel("general", "Enter your username");
   }
-  if (message.includes(" history")) {
+  if (message.includes(" save history") || message.includes("save history")) {
     // bot.postMessageToChannel("general", "Getting History");
     bot.postMessage(channel, "Getting history");
 
@@ -65,12 +68,48 @@ const handleMessage = data => {
 };
 
 const getChannelHistory = channel => {
-  var tokens = `xoxp-771591631143-769737406181-771950709478-5dfdd0b8f3fd4e748c8892cda41e2c1a`;
+  var tokens = `xoxp-771591631143-769737406181-758268424866-fad9f3b5fb5b194e98dd2094b217f2bf`;
   var url = `https://slack.com/api/conversations.history?token=${tokens}&channel=${channel}`;
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4 && xhr.status == 200) console.log(xhr.responseText);
+    if (xhr.readyState == 4 && xhr.status == 200)
+      saveHistory(xhr.responseText, channel);
   };
   xhr.open("GET", url, true);
   xhr.send();
 };
+const date = Date.now();
+
+const saveHistory = (history, channel) => {
+  dfs.writeFile(
+    `/public/slack-chat-${date}.json`,
+    history,
+    { encoding: "utf8" },
+    (err, stat) => {
+      if (err) {
+        return bot.postMessage(channel, err.status.code);
+        console.log(err);
+      }
+      console.log(stat);
+      bot.postMessage(
+        channel,
+        "Your chat history is saved to your dropbox public folder"
+      );
+    }
+  );
+};
+
+const readFolder = channel => {
+  dfs.readdir("/public", (err, result) => {
+    if (err) {
+      return bot.postMessage(channel, err.status.code);
+      console.log(err);
+    }
+    console.log(result);
+    result.forEach(file => {
+      bot.postMessage(channel, file);
+    });
+  });
+};
+
+bot.login();
